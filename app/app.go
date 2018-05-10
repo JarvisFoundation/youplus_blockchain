@@ -1,7 +1,7 @@
 package app
 
 import (
-	"./db"
+	"./engine"
 )
 
 //App has router and db instances
@@ -9,11 +9,13 @@ type App struct{}
 
 //Init initializes the app with predefined configuration
 func (app App) Init() {
-	//var blockchainService = new(engine.Blockchain)
+	var blockchainService = new(engine.Blockchain)
 	//var powService = new(engine.PowService)
+	blockchainService.NewBlockChainLevel() // returns blockchain instance
+	//iterate over blockchain
 
-	var dbService = new(db.DB)
-	dbService.Put([]byte("key"), []byte("test data2"))
+	//var dbService = new(db.LDB)
+	//dbService.Put([]byte("key"), []byte("test data2"))
 	//data := dbService.Get([]byte("key"))
 	//fmt.Println(data)
 
