@@ -8,7 +8,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
-const ldbFile = "jarvis.db"
+const dbFile = "jarvis.db"
 
 var _initCtx sync.Once
 var _instance *LDB
@@ -24,12 +24,11 @@ func getLevelDatabase() *leveldb.DB {
 	_initCtx.Do(func() {
 		fmt.Println("Connecting to database...")
 		_instance = new(LDB)
-		dbObj, err := leveldb.OpenFile(ldbFile, nil)
+		dbObj, err := leveldb.OpenFile(dbFile, nil)
 
 		if _, corrupted := err.(*errors.ErrCorrupted); corrupted {
-			dbObj, err = leveldb.RecoverFile(ldbFile, nil)
+			dbObj, err = leveldb.RecoverFile(dbFile, nil)
 		}
-
 		if err != nil {
 			fmt.Println(err.Error())
 			fmt.Println("Failed to connect...")

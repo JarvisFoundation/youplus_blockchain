@@ -11,41 +11,37 @@ type BlockchainService struct{}
 
 // Blockchain keeps a sequence of Blocks
 type Blockchain struct {
-	tip    []byte
-	Blocks []*Block
+	tip []byte
+	//Blocks []*Block
 }
-
-const dbFile = "jarvis.db"
-const blocksBucket = "blocks"
 
 // AddBlock saves provided data as a block in the blockchain
 func (bc *Blockchain) AddBlock(data string) {
-	prevBlock := bc.Blocks[len(bc.Blocks)-1]
-	newBlock := NewBlock(data, prevBlock.Hash)
-	bc.Blocks = append(bc.Blocks, newBlock)
+	//prevBlock := bc.Blocks[len(bc.Blocks)-1]
+	//newBlock := NewBlock(data, prevBlock.Hash)
+	//bc.Blocks = append(bc.Blocks, newBlock)
 }
 
 // NewBlockchain creates a new Blockchain with genesis Block
-func (bc *Blockchain) NewBlockchain() {
-	//return &Blockchain{[]*Block{NewGenesisBlock()}}
+func (bc *Blockchain) NewBlockchain() *Blockchain {
+	var tip []byte
+	return &Blockchain{tip}
 }
 
 // NewBlockChainLevel creates a new Blockchain with genesis Block
-func (bc *Blockchain) NewBlockChainLevel() {
+func (bc *Blockchain) NewBlockChainLevel(ldb *db.LDB) *Blockchain {
 	var tip []byte
-	var dbService = new(db.LDB)
-	b := dbService.Get([]byte("1"))
-	if b == nil {
-		fmt.Println("Create Blockchain: Genesis Block")
+	ref := ldb.Get([]byte("1"))
+	if ref == nil {
+		fmt.Println("Creating Blockchain")
 		genesis := NewGenesisBlock()
-		dbService.Put(genesis.Hash, genesis.SerializeBlock())
-		dbService.Put([]byte("l"), genesis.Hash)
+		ldb.Put(genesis.Hash, genesis.SerializeBlock())
+		ldb.Put([]byte("1"), genesis.Hash)
 		tip = genesis.Hash
 	} else {
-		fmt.Println("blockchain present:")
-		tip = dbService.Get([]byte("1"))
-		fmt.Println(tip)
+		fmt.Println("Blockchain present")
+		tip = ldb.Get([]byte("1"))
 	}
-	//bc := Blockchain{tip, db}
-	//return &bc
+	bc2 := Blockchain{tip}
+	return &bc2
 }
