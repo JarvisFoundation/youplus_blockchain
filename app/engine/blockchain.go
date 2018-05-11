@@ -12,24 +12,27 @@ type BlockchainService struct{}
 // Blockchain keeps a sequence of Blocks
 type Blockchain struct {
 	tip []byte
-	//Blocks []*Block
+	ldb *db.LDB
 }
 
-// AddBlock saves provided data as a block in the blockchain
+// BlockchainIterator Iterates over blocks of blockchain
+type BlockchainIterator struct {
+	currentHash []byte
+	ldb         *db.LDB
+}
+
+// AddBlock add block to blockchain
 func (bc *Blockchain) AddBlock(data string) {
-	//prevBlock := bc.Blocks[len(bc.Blocks)-1]
-	//newBlock := NewBlock(data, prevBlock.Hash)
-	//bc.Blocks = append(bc.Blocks, newBlock)
+	var lastHash []byte
+	lastHash = bc.ldb.Get([]byte("1"))
+	newBlock := NewBlock(data, lastHash)
+	bc.ldb.Put(newBlock.Hash, newBlock.SerializeBlock())
+	bc.ldb.Put([]byte("1"), newBlock.Hash)
+	bc.tip = newBlock.Hash
 }
 
 // NewBlockchain creates a new Blockchain with genesis Block
-func (bc *Blockchain) NewBlockchain() *Blockchain {
-	var tip []byte
-	return &Blockchain{tip}
-}
-
-// NewBlockChainLevel creates a new Blockchain with genesis Block
-func (bc *Blockchain) NewBlockChainLevel(ldb *db.LDB) *Blockchain {
+func (bc *Blockchain) NewBlockchain(ldb *db.LDB) *Blockchain {
 	var tip []byte
 	ref := ldb.Get([]byte("1"))
 	if ref == nil {
@@ -42,6 +45,19 @@ func (bc *Blockchain) NewBlockChainLevel(ldb *db.LDB) *Blockchain {
 		fmt.Println("Blockchain present")
 		tip = ldb.Get([]byte("1"))
 	}
-	bc2 := Blockchain{tip}
-	return &bc2
+	return &Blockchain{tip, ldb}
+}
+
+//Iterator helper to iterate over blockchain
+func (bc *Blockchain) Iterator() *BlockchainIterator {
+	return &BlockchainIterator{bc.tip, bc.ldb}
+}
+
+//Next Get the block pointed by tip of the chain
+func (i *BlockchainIterator) Next() *Block {
+	var block *Block
+	tipBlock := i.ldb.Get(i.currentHash)
+	block = DeserializeBlock(tipBlock)
+	i.currentHash = block.PrevBlockHash
+	return block
 }
