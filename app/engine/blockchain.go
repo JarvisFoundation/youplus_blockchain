@@ -6,6 +6,8 @@ import (
 	"../db"
 )
 
+const genesisCoinbaseData = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks"
+
 //BlockchainService ...
 type BlockchainService struct{}
 
@@ -21,23 +23,14 @@ type BlockchainIterator struct {
 	ldb         *db.LDB
 }
 
-// AddBlock add block to blockchain
-func (bc *Blockchain) AddBlock(data string) {
-	var lastHash []byte
-	lastHash = bc.ldb.Get([]byte("1"))
-	newBlock := NewBlock(data, lastHash)
-	bc.ldb.Put(newBlock.Hash, newBlock.SerializeBlock())
-	bc.ldb.Put([]byte("1"), newBlock.Hash)
-	bc.tip = newBlock.Hash
-}
-
 // NewBlockchain creates a new Blockchain with genesis Block
-func (bc *Blockchain) NewBlockchain(ldb *db.LDB) *Blockchain {
+func (bc *Blockchain) NewBlockchain(address string, ldb *db.LDB) *Blockchain {
 	var tip []byte
 	ref := ldb.Get([]byte("1"))
 	if ref == nil {
 		fmt.Println("Creating Blockchain")
-		genesis := NewGenesisBlock()
+		cbtx := NewCoinbaseTX(address, genesisCoinbaseData)
+		genesis := NewGenesisBlock(cbtx)
 		ldb.Put(genesis.Hash, genesis.SerializeBlock())
 		ldb.Put([]byte("1"), genesis.Hash)
 		tip = genesis.Hash

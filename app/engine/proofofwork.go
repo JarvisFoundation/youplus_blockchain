@@ -42,7 +42,7 @@ func (pow *ProofOfWork) PrepareData(nonce int) []byte {
 	data := bytes.Join(
 		[][]byte{
 			pow.block.PrevBlockHash,
-			pow.block.Data,
+			pow.block.HashTransactions(),
 			utilService.IntToHex(pow.block.Timestamp),
 			utilService.IntToHex(int64(targetBits)),
 			utilService.IntToHex(int64(nonce)),
@@ -57,7 +57,7 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 	var hashInt big.Int
 	var hash [32]byte
 	nonce := 0
-	fmt.Println("Mining block:", pow.block.Data)
+	fmt.Println("Mining New block")
 	for nonce < maxNonce {
 		data := pow.PrepareData(nonce)
 		hash = sha256.Sum256(data)
