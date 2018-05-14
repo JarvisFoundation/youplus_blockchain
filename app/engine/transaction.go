@@ -42,6 +42,11 @@ func NewCoinbaseTX(to, data string) *Transaction {
 	return &tx
 }
 
+//IsCoinbase is transaction coinbase i.e. does not refer any output
+func (tx Transaction) IsCoinbase() bool {
+	return len(tx.Vin) == 1 && len(tx.Vin[0].Txid) == 0 && tx.Vin[0].Vout == -1
+}
+
 //SetTransactionID setting the transaction id
 func (tx *Transaction) SetTransactionID() {
 	var encoded bytes.Buffer
@@ -53,4 +58,14 @@ func (tx *Transaction) SetTransactionID() {
 	}
 	hash = sha256.Sum256(encoded.Bytes())
 	tx.ID = hash[:]
+}
+
+//UnlockOutput to check if output key matches input key
+func (in *TXInput) UnlockOutput(unlockingData string) bool {
+	return in.ScriptSig == unlockingData
+}
+
+//UnlockInput to check if output key matches input key
+func (out *TXOutput) UnlockInput(unlockingData string) bool {
+	return out.ScriptPubKey == unlockingData
 }

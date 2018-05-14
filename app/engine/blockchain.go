@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"../db"
@@ -44,6 +45,47 @@ func (bc *Blockchain) NewBlockchain(address string, ldb *db.LDB) *Blockchain {
 //Iterator helper to iterate over blockchain
 func (bc *Blockchain) Iterator() *BlockchainIterator {
 	return &BlockchainIterator{bc.tip, bc.ldb}
+}
+
+//FindUnspentTransactions find all the unspent outputs which are not input to any transaction
+func (bc *Blockchain) FindUnspentTransactions(address string) []Transaction {
+	var unspentTXs []Transaction
+	spentTXO := make(map[string][]int)
+	bci := bc.Iterator()
+	for {
+		block := bci.Next()
+		for _, tx := range block.Transactions {
+			txID := hex.EncodeToString(tx.ID)
+		Outputs:
+			for outIdx, out := range tx.Vout {
+				if spentTXO[txID] != nil {
+					for _, spentOut := range spentTXO[txID] {
+						if spentOut == outIdx {
+							continue Outputs
+						}
+					}
+				}
+
+				if out.UnlockInput(address) {
+					unspentTXs = append(unspentTXs, *tx)
+				}
+			}
+
+			if tx.IsCoinbase() == false {
+				for _, in := range tx.Vin {
+					if in.UnlockOutput(address) {
+						inTxID := hex.EncodeToString(in.Txid)
+						spentTXO[inTxID] = append(spentTXO[inTxID], in.Vout)
+					}
+				}
+			}
+		}
+
+		if len(block.PrevBlockHash) == 0 {
+			break
+		}
+	}
+	return unspentTXs
 }
 
 //Next Get the block pointed by tip of the chain
